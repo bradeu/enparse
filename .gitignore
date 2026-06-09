@@ -1,0 +1,24 @@
+# Deploy receipts
+contracts/deploy.*.json
+
+# Hardhat
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+
+# Node
+node_modules/
+contracts/node_modules/
+
+# Go build output
+cli/enparse
+dist/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
