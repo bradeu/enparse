@@ -204,4 +204,4 @@ enparse/
 
 ## License
 
-MIT • [LICENSE](LICENSE).
+MIT • [LICENSE](LICENSE)
