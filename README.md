@@ -45,16 +45,12 @@ Only the project owner can write secrets or add members. Any member can read the
 
 ## Prerequisites
 
-- Go 1.22+
 - Sepolia RPC URL — use the free public endpoint `https://ethereum-sepolia-rpc.publicnode.com`
 - Sepolia ETH for each user — free from the [Google Web3 Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
-- Node.js 18+ and npm — contracts deployment
 
 ---
 
-## Install
-
-
+## Installation
 
 ```bash
 # YOLO
@@ -86,20 +82,20 @@ mv enparse /usr/local/bin/
 
 ## Quick Start
 
-### 1 — Deploy contracts (owner only, once)
+### 1. Deploy contracts (project owner only, once)
 
 ```bash
-cd contracts
-npm install
+# Generate your identity first (if you haven't)
+enparse init
 
 # Point at Sepolia
 enparse config set rpc_url https://ethereum-sepolia-rpc.publicnode.com
 
 # Deploy — reads your identity key, writes contract addresses back to ~/.enparse/config.json
-npm run deploy
+enparse deploy
 ```
 
-### 2 — Set up identity (every user)
+### 2. Set up identity (every teammate)
 
 ```bash
 # Generate Ethereum + NaCl keypair, saved to ~/.enparse/identity.json
@@ -112,7 +108,7 @@ enparse status
 enparse register
 ```
 
-### 3 — Create a project and store secrets (owner)
+### 3. Create a project and store secrets (project owner)
 
 ```bash
 enparse project create myapp
@@ -121,7 +117,7 @@ enparse project add myapp 0x<teammate address>
 enparse set myapp API_KEY=... # Insert secrets 
 ```
 
-### 4 — Use secrets (any member)
+### 4. Use secrets (any member)
 
 ```bash
 # Inject all secrets as env vars and exec your command
@@ -158,6 +154,7 @@ enparse config show   # print current values
 | Command | Description |
 |---------|-------------|
 | `enparse init [--force]` | Generate identity (NaCl + Ethereum keypair) |
+| `enparse deploy` | Deploy IdentityRegistry + ProjectVault contracts on-chain (owner only, once) |
 | `enparse register` | Register NaCl public key on-chain (you pay gas) |
 | `enparse status` | Show identity, config, and chain registration status |
 | `enparse config set <key> <value>` | Set a config value |
@@ -178,27 +175,6 @@ enparse config show   # print current values
 - **Per-member copies.** Each member gets their own encrypted blob. Decryption requires their private NaCl key, which never leaves `~/.enparse/identity.json`.
 - **Append-only chain.** Old secret versions persist in transaction history. Rotate secrets after removing a member.
 - **No process persistence.** `enparse run` uses `syscall.Exec` — secrets live only in the child process environment and are never written to disk.
-
----
-
-## Repository Layout
-
-```
-enparse/
-├── contracts/                  Solidity contracts + Hardhat config
-│   ├── contracts/
-│   │   ├── IdentityRegistry.sol
-│   │   └── ProjectVault.sol
-│   ├── scripts/deploy.ts       Deploys to Sepolia, updates ~/.enparse/config.json
-│   └── test/                   36 Hardhat tests
-└── cli/                        Go CLI — single binary after go build
-    ├── cmd/                    Cobra commands
-    └── internal/
-        ├── chain/              go-ethereum contract bindings
-        ├── config/             ~/.enparse/config.json
-        ├── crypto/             NaCl box encrypt/decrypt
-        └── identity/           ~/.enparse/identity.json
-```
 
 ---
 
