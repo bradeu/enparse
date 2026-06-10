@@ -43,32 +43,28 @@ Only the project owner can write secrets or add members. Any member can read the
 
 ---
 
-## Prerequisites
-
-- Sepolia RPC URL — use the free public endpoint `https://ethereum-sepolia-rpc.publicnode.com`
-- Sepolia ETH for each user — free from the [Google Web3 Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)
-
----
-
 ## Installation
 
-```bash
-# YOLO
+Pick your platform and run one command:
 
+```bash
 # macOS (Apple Silicon)
 curl -L https://github.com/bradeu/enparse/releases/latest/download/enparse-darwin-arm64 -o enparse
-chmod +x enparse && mv enparse /usr/local/bin/
+chmod +x enparse && sudo mv enparse /usr/local/bin/
 
 # macOS (Intel)
 curl -L https://github.com/bradeu/enparse/releases/latest/download/enparse-darwin-amd64 -o enparse
-chmod +x enparse && mv enparse /usr/local/bin/
+chmod +x enparse && sudo mv enparse /usr/local/bin/
 
 # Linux
 curl -L https://github.com/bradeu/enparse/releases/latest/download/enparse-linux-amd64 -o enparse
-chmod +x enparse && mv enparse /usr/local/bin/
+chmod +x enparse && sudo mv enparse /usr/local/bin/
 ```
 
-**Build from source:**
+<details>
+<summary><strong>Build from source</strong></summary>
+
+Requires Go 1.22+.
 
 ```bash
 cd cli
@@ -78,53 +74,111 @@ mv enparse /usr/local/bin/
 
 > `GOTOOLCHAIN=local` prevents Go 1.21+'s toolchain manager from auto-bumping the `go` directive in `go.mod`.
 
+</details>
+
 ---
 
 ## Quick Start
 
-### 1. Deploy contracts (project owner only, once)
+> **Every person on the team** follows steps 1–4. The **project owner** also does steps 5.
+
+---
+
+### Step 1: Generate your identity
 
 ```bash
-# Generate your identity first (if you haven't)
 enparse init
-
-# Point at Sepolia
-enparse config set rpc_url https://ethereum-sepolia-rpc.publicnode.com
-
-# Deploy — reads your identity key, writes contract addresses back to ~/.enparse/config.json
-enparse deploy
 ```
 
-### 2. Set up identity (every teammate)
+This creates `~/.enparse/identity.json` with your Ethereum address and NaCl keypair. Your private keys never leave this file.
+
+Run `enparse status` to see your address:
+
+```
+address   0xABCD...1234
+```
+
+Copy that address — you'll need it in the next step.
+
+---
+
+### Step 2: Get free Sepolia ETH
+
+enparse uses the Ethereum Sepolia testnet. Gas fees are paid with test ETH (worthless, free).
+
+1. Go to **[Google Web3 Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)**
+2. Sign in with a Google account
+3. Paste your `0x...` address from Step 1
+4. Click **Send 0.05 ETH**
+
+The funds arrive in under a minute. You can verify at [sepolia.etherscan.io](https://sepolia.etherscan.io) by searching your address.
+
+> Each address needs to do this once. 0.05 ETH covers hundreds of transactions.
+
+---
+
+### Step 3: Point enparse at Sepolia
 
 ```bash
-# Generate Ethereum + NaCl keypair, saved to ~/.enparse/identity.json
-enparse init
+enparse config set rpc_url https://ethereum-sepolia-rpc.publicnode.com
+```
 
-# Confirm your address and config
-enparse status
+This free public endpoint.
 
-# Fund your address with Sepolia ETH, then register on-chain
+---
+
+### Step 4: Register on-chain
+
+```bash
 enparse register
 ```
 
-### 3. Create a project and store secrets (project owner)
+This publishes your NaCl public key to `IdentityRegistry` so teammates can encrypt secrets for you. Costs a small amount of gas (well under 0.01 ETH).
+
+---
+
+### Step 5: Deploy contracts (project owner only, once per team)
+
+> Skip this if someone on your team already deployed. Ask them for the contract addresses and run:
+> ```bash
+> enparse config set identity_registry_addr 0x<address>
+> enparse config set project_vault_addr 0x<address>
+> ```
+
+If you're the first person setting up:
 
 ```bash
-enparse project create myapp
-enparse project add myapp 0x<teammate address>
-
-enparse set myapp API_KEY=... # Insert secrets 
+enparse deploy
 ```
 
-### 4. Use secrets (any member)
+This deploys `IdentityRegistry` and `ProjectVault` to Sepolia and automatically saves their addresses to `~/.enparse/config.json`. Share those two addresses with your teammates.
+
+---
+
+### Step 6: Create a project and store secrets (project owner)
 
 ```bash
-# Inject all secrets as env vars and exec your command
+# Create the project
+enparse project create myapp
+
+# Add a teammate by their Ethereum address
+enparse project add myapp 0x<teammate address>
+
+# Store secrets — encrypted per member, written on-chain
+enparse set myapp DB_URL=postgres://user:pass@host/db
+enparse set myapp API_KEY=sk-...
+```
+
+---
+
+### Step 7: Use secrets (any member)
+
+```bash
+# Inject all secrets as env vars and run your command
 enparse run myapp -- go run .
 enparse run myapp -- npm start
 
-# Or fetch to a local cache file
+# Or pull all secrets to a local .env cache
 enparse pull myapp    # writes ~/.enparse/cache/myapp.env
 
 # Or read a single value
@@ -154,7 +208,7 @@ enparse config show   # print current values
 | Command | Description |
 |---------|-------------|
 | `enparse init [--force]` | Generate identity (NaCl + Ethereum keypair) |
-| `enparse deploy` | Deploy IdentityRegistry + ProjectVault contracts on-chain (owner only, once) |
+| `enparse deploy` | Deploy IdentityRegistry + ProjectVault on-chain (owner only, once) |
 | `enparse register` | Register NaCl public key on-chain (you pay gas) |
 | `enparse status` | Show identity, config, and chain registration status |
 | `enparse config set <key> <value>` | Set a config value |
