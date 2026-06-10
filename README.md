@@ -13,6 +13,8 @@
 
 No central server to compromise. Secrets are encrypted client-side with [NaCl box](https://nacl.cr.yp.to/box.html) before leaving your machine and stored as ciphertext on Ethereum. Each team member gets their own encrypted copy so that the chain never sees plaintext.
 
+**Jump to:** [Installation](#installation) · [Owner setup](#setup--owner) · [Member setup](#setup--member)
+
 ---
 
 ## How it works
@@ -39,7 +41,7 @@ Owner                                     Teammate
 | `IdentityRegistry` | Maps each Ethereum address to a NaCl public key |
 | `ProjectVault` | Stores per-member encrypted blobs keyed by project + secret name + address |
 
-Only the project owner can write secrets or add members. Any member can read their own blobs.
+One deployment per team. Multiple projects live inside the same vault.
 
 ---
 
@@ -50,15 +52,15 @@ Pick your platform and run one command:
 ```bash
 # macOS (Apple Silicon)
 curl -L https://github.com/bradeu/enparse/releases/latest/download/enparse-darwin-arm64 -o enparse
-chmod +x enparse && sudo mv enparse /usr/local/bin/
+chmod +x enparse && mv enparse /usr/local/bin/
 
 # macOS (Intel)
 curl -L https://github.com/bradeu/enparse/releases/latest/download/enparse-darwin-amd64 -o enparse
-chmod +x enparse && sudo mv enparse /usr/local/bin/
+chmod +x enparse && mv enparse /usr/local/bin/
 
 # Linux
 curl -L https://github.com/bradeu/enparse/releases/latest/download/enparse-linux-amd64 -o enparse
-chmod +x enparse && sudo mv enparse /usr/local/bin/
+chmod +x enparse && mv enparse /usr/local/bin/
 ```
 
 <details>
@@ -72,96 +74,65 @@ GOTOOLCHAIN=local go build -o enparse .
 mv enparse /usr/local/bin/
 ```
 
-> `GOTOOLCHAIN=local` prevents Go 1.21+'s toolchain manager from auto-bumping the `go` directive in `go.mod`.
-
 </details>
 
 ---
 
-## Quick Start
+## Setup — Owner
 
-> **Every person on the team** follows steps 1–4. The **project owner** also does steps 5.
+> Do this once for the whole team. Share your wallet address and the two contract addresses with teammates when done.
 
----
-
-### Step 1: Generate your identity
+### 1. Generate your identity
 
 ```bash
 enparse init
 ```
 
-This creates `~/.enparse/identity.json` with your Ethereum address and NaCl keypair. Your private keys never leave this file.
+Creates `~/.enparse/identity.json` with your Ethereum address and NaCl keypair.
 
-Run `enparse status` to see your address:
-
-```
-address   0xABCD...1234
+```bash
+enparse status
 ```
 
-Copy that address — you'll need it in the next step.
+Copy your `0x...` address — you need it in the next step.
 
----
+### 2. Get free Sepolia ETH
 
-### Step 2: Get free Sepolia ETH
-
-enparse uses the Ethereum Sepolia testnet. Gas fees are paid with test ETH (worthless, free).
-
-1. Go to **[Google Web3 Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)**
+1. Go to the **[Google Web3 Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)**
 2. Sign in with a Google account
-3. Paste your `0x...` address from Step 1
+3. Paste your `0x...` address
 4. Click **Send 0.05 ETH**
 
-The funds arrive in under a minute. You can verify at [sepolia.etherscan.io](https://sepolia.etherscan.io) by searching your address.
+Funds arrive in under a minute. Verify at [sepolia.etherscan.io](https://sepolia.etherscan.io) by searching your address.
 
-> Each address needs to do this once. 0.05 ETH covers hundreds of transactions.
-
----
-
-### Step 3: Point enparse at Sepolia
+### 3. Configure RPC
 
 ```bash
 enparse config set rpc_url https://ethereum-sepolia-rpc.publicnode.com
 ```
 
-This free public endpoint.
-
----
-
-### Step 4: Register on-chain
-
-```bash
-enparse register
-```
-
-This publishes your NaCl public key to `IdentityRegistry` so teammates can encrypt secrets for you. Costs a small amount of gas (well under 0.01 ETH).
-
----
-
-### Step 5: Deploy contracts (project owner only, once per team)
-
-> Skip this if someone on your team already deployed. Ask them for the contract addresses and run:
-> ```bash
-> enparse config set identity_registry_addr 0x<address>
-> enparse config set project_vault_addr 0x<address>
-> ```
-
-If you're the first person setting up:
+### 4. Deploy contracts
 
 ```bash
 enparse deploy
 ```
 
-This deploys `IdentityRegistry` and `ProjectVault` to Sepolia and automatically saves their addresses to `~/.enparse/config.json`. Share those two addresses with your teammates.
+Deploys `IdentityRegistry` and `ProjectVault` to Sepolia and saves both addresses to `~/.enparse/config.json` automatically.
 
----
+Run `enparse config show` to see the addresses — share them with your teammates.
 
-### Step 6: Create a project and store secrets (project owner)
+### 5. Register on-chain
 
 ```bash
-# Create the project
+enparse register
+```
+
+### 6. Create a project and store secrets
+
+```bash
 enparse project create myapp
 
-# Add a teammate by their Ethereum address
+# Add teammates by their Ethereum address (after they complete their setup)
 enparse project add myapp 0x<teammate address>
 
 # Store secrets — encrypted per member, written on-chain
@@ -171,7 +142,50 @@ enparse set myapp API_KEY=sk-...
 
 ---
 
-### Step 7: Use secrets (any member)
+## Setup — Member
+
+> Ask your owner for their two contract addresses before starting.
+
+### 1. Generate your identity
+
+```bash
+enparse init
+```
+
+Creates `~/.enparse/identity.json` with your Ethereum address and NaCl keypair.
+
+```bash
+enparse status
+```
+
+Copy your `0x...` address — share it with the owner so they can add you to projects.
+
+### 2. Get free Sepolia ETH
+
+1. Go to the **[Google Web3 Faucet](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)**
+2. Sign in with a Google account
+3. Paste your `0x...` address
+4. Click **Send 0.05 ETH**
+
+Funds arrive in under a minute. Verify at [sepolia.etherscan.io](https://sepolia.etherscan.io) by searching your address.
+
+### 3. Configure RPC and contract addresses
+
+```bash
+enparse config set rpc_url https://ethereum-sepolia-rpc.publicnode.com
+enparse config set identity_registry_addr 0x<address from owner>
+enparse config set project_vault_addr 0x<address from owner>
+```
+
+### 4. Register on-chain
+
+```bash
+enparse register
+```
+
+### 5. Use secrets
+
+Once the owner has added you to a project:
 
 ```bash
 # Inject all secrets as env vars and run your command
