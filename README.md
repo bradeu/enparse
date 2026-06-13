@@ -1,8 +1,10 @@
 <div align="center">
 
-# enparse
+<img src="enparse.png" alt="enparse" width="720"/>
 
-**enparse** is an open-source, encrypted, decentralized secret-sharing platform for small teams, enabling local deployments without exposing secrets.
+<br/>
+
+**enparse** (.env-parser) is an open-source, encrypted, decentralized secret-sharing platform for small teams, enabling local deployments without exposing secrets.
 
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 [![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev)
