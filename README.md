@@ -52,17 +52,19 @@ One deployment per team. Multiple projects live inside the same vault.
 Pick your platform and run one command:
 
 ```bash
+# YOLO
+
 # macOS (Apple Silicon)
 curl -L https://github.com/bradeu/enparse/releases/latest/download/enparse-darwin-arm64 -o enparse
-chmod +x enparse && mv enparse /usr/local/bin/
+chmod +x enparse && sudo mv enparse /usr/local/bin/
 
 # macOS (Intel)
 curl -L https://github.com/bradeu/enparse/releases/latest/download/enparse-darwin-amd64 -o enparse
-chmod +x enparse && mv enparse /usr/local/bin/
+chmod +x enparse && sudo mv enparse /usr/local/bin/
 
 # Linux
 curl -L https://github.com/bradeu/enparse/releases/latest/download/enparse-linux-amd64 -o enparse
-chmod +x enparse && mv enparse /usr/local/bin/
+chmod +x enparse && sudo mv enparse /usr/local/bin/
 ```
 
 <details>
